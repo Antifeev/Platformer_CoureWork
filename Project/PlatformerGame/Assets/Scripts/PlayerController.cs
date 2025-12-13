@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
@@ -27,5 +28,12 @@ public class PlayerController : MonoBehaviour
                 rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             }
         }
+            // Если упали слишком низко (например, Y < -10), перезагружаем уровень
+            if (transform.position.y < -10f)
+            {
+                // Перезагрузка текущей сцены
+                UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+            }
+        }
     }
-}
+        
