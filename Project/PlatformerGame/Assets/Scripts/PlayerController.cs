@@ -1,39 +1,67 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro; // Подключаем библиотеку для работы с Текстом
 
 public class PlayerController : MonoBehaviour
 {
-    public float speed = 5f;       // Скорость бега
-    public float jumpForce = 10f;  // Сила прыжка
-    private Rigidbody2D rb;        // Ссылка на физику
+    public float speed = 5f;
+    public float jumpForce = 10f;
+    private Rigidbody2D rb;
+
+    // Переменные для счета
+    public int score = 0;              // Текущий счет
+    public TextMeshProUGUI scoreText;  // Ссылка на текст на экране
 
     void Start()
     {
-        // Находим компонент физики на персонаже
         rb = GetComponent<Rigidbody2D>();
+        UpdateScoreUI(); // Обновляем текст при старте
     }
 
     void Update()
     {
-        // 1. Движение влево-вправо (A/D или стрелки)
         float moveInput = Input.GetAxis("Horizontal");
         rb.velocity = new Vector2(moveInput * speed, rb.velocity.y);
 
-        // 2. Прыжок (Пробел)
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            // Прыгаем, только если вертикальная скорость почти ноль (значит, стоим на земле)
             if (Mathf.Abs(rb.velocity.y) < 0.001f)
             {
                 rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
             }
         }
-            // Если упали слишком низко (например, Y < -10), перезагружаем уровень
-            if (transform.position.y < -10f)
-            {
-                // Перезагрузка текущей сцены
-                UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
-            }
+
+        if (transform.position.y < -10f)
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
     }
-        
+
+    // Обработка столкновений с триггерами (Монетки и Финиш)
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        // Если коснулись монетки
+        if (collision.CompareTag("Coin"))
+        {
+            score++; // Увеличиваем счет
+            UpdateScoreUI(); // Обновляем текст
+            Destroy(collision.gameObject); // Удаляем монетку со сцены
+        }
+
+        // Если коснулись финиша
+        if (collision.CompareTag("Finish"))
+        {
+            Debug.Log("Победа! Собрано монет: " + score);
+            // Тут скоро сделаем экран победы
+        }
+    }
+
+    // Функция для обновления текста
+    void UpdateScoreUI()
+    {
+        if (scoreText != null)
+        {
+            scoreText.text = "Coins: " + score;
+        }
+    }
+}
