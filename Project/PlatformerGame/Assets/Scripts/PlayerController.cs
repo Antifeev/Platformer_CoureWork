@@ -64,4 +64,36 @@ public class PlayerController : MonoBehaviour
             scoreText.text = "Coins: " + score;
         }
     }
+    // Этот метод срабатывает, когда мы врезаемся в твердый объект (Врага или Шип)
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        // 1. Если это Враг
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            // Проверяем: мы упали сверху?
+            // (Смотрим на точки контакта: если нормаль удара направлена вверх, значит мы приземлились на голову)
+            foreach (ContactPoint2D point in collision.contacts)
+            {
+                if (point.normal.y > 0.5f)
+                {
+                    // УБИВАЕМ ВРАГА
+                    Destroy(collision.gameObject);
+
+                    // Подпрыгиваем (отскок)
+                    rb.velocity = new Vector2(rb.velocity.x, jumpForce / 1.5f);
+                    return; // Выходим, чтобы не умереть
+                }
+            }
+
+            // Если удар был не сверху (сбоку) -> Мы умираем
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+
+        // 2. Если это Шип (ловушка)
+        if (collision.gameObject.CompareTag("Trap"))
+        {
+            // Сразу смерть
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+    }
 }
