@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour
     public AudioClip coinSound;     // Монетка
     public AudioClip hitSound;      // Удар врага
     public AudioClip deathSound;    // Смерть
-    public AudioClip winSound;      // <-- НОВЫЙ ЗВУК ПОБЕДЫ
+    public AudioClip winSound;      // ЗВУК ПОБЕДЫ
 
     [Header("Настройки игрока")]
     public float speed = 5f;
@@ -114,7 +114,6 @@ public class PlayerController : MonoBehaviour
 
     void LoadWinScene()
     {
-        // ВАЖНО: Убедись, что сцена называется именно WinScene
         SceneManager.LoadScene("WinScene");
     }
 

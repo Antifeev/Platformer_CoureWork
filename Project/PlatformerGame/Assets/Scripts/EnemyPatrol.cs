@@ -3,7 +3,7 @@ using UnityEngine;
 public class EnemyPatrol : MonoBehaviour
 {
     public float speed = 2f;        // Скорость
-    public float distance = 3f;     // Дальность прогулки (в Unity это метры, 20 пикселей это ~2-3 единицы)
+    public float distance = 3f;     // Дальность прогулки
 
     private Vector3 startPos;
     private bool movingRight = true;
