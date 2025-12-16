@@ -1,25 +1,38 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using TMPro; // Подключаем библиотеку для работы с Текстом
+using TMPro;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Звуки")]
+    public AudioSource audioSource;
+    public AudioClip jumpSound;     // Прыжок
+    public AudioClip coinSound;     // Монетка
+    public AudioClip hitSound;      // Удар врага
+    public AudioClip deathSound;    // Смерть
+    public AudioClip winSound;      // <-- НОВЫЙ ЗВУК ПОБЕДЫ
+
+    [Header("Настройки игрока")]
     public float speed = 5f;
     public float jumpForce = 10f;
     private Rigidbody2D rb;
+    private bool isGameStopped = false; // Блокировка управления (при смерти или победе)
 
-    // Переменные для счета
-    public int score = 0;              // Текущий счет
-    public TextMeshProUGUI scoreText;  // Ссылка на текст на экране
+    [Header("UI")]
+    public int score = 0;
+    public TextMeshProUGUI scoreText;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        UpdateScoreUI(); // Обновляем текст при старте
+        UpdateScoreUI();
     }
 
     void Update()
     {
+        // Если игра остановлена (умерли или победили) — кнопки не работают
+        if (isGameStopped) return;
+
         float moveInput = Input.GetAxis("Horizontal");
         rb.velocity = new Vector2(moveInput * speed, rb.velocity.y);
 
@@ -28,72 +41,109 @@ public class PlayerController : MonoBehaviour
             if (Mathf.Abs(rb.velocity.y) < 0.001f)
             {
                 rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+                PlaySound(jumpSound);
             }
         }
 
         if (transform.position.y < -10f)
         {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            Die();
         }
     }
 
-    // Обработка столкновений с триггерами (Монетки и Финиш)
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Если коснулись монетки
+        if (isGameStopped) return;
+
         if (collision.CompareTag("Coin"))
         {
-            score++; // Увеличиваем счет
-            UpdateScoreUI(); // Обновляем текст
-            Destroy(collision.gameObject); // Удаляем монетку со сцены
+            PlaySound(coinSound);
+            score++;
+            UpdateScoreUI();
+            Destroy(collision.gameObject);
         }
 
-        // Если коснулись финиша
+        // --- ЛОГИКА ФИНИША ---
         if (collision.CompareTag("Finish"))
         {
-            Debug.Log("Победа! Собрано монет: " + score);
-            // Тут скоро сделаем экран победы
+            WinGame(); // Запускаем победу
         }
     }
 
-    // Функция для обновления текста
-    void UpdateScoreUI()
-    {
-        if (scoreText != null)
-        {
-            scoreText.text = "Coins: " + score;
-        }
-    }
-    // Этот метод срабатывает, когда мы врезаемся в твердый объект (Врага или Шип)
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        // 1. Если это Враг
+        if (isGameStopped) return;
+
         if (collision.gameObject.CompareTag("Enemy"))
         {
-            // Проверяем: мы упали сверху?
-            // (Смотрим на точки контакта: если нормаль удара направлена вверх, значит мы приземлились на голову)
             foreach (ContactPoint2D point in collision.contacts)
             {
                 if (point.normal.y > 0.5f)
                 {
-                    // УБИВАЕМ ВРАГА
+                    PlaySound(hitSound);
                     Destroy(collision.gameObject);
-
-                    // Подпрыгиваем (отскок)
                     rb.velocity = new Vector2(rb.velocity.x, jumpForce / 1.5f);
-                    return; // Выходим, чтобы не умереть
+                    return;
                 }
             }
-
-            // Если удар был не сверху (сбоку) -> Мы умираем
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            Die();
         }
 
-        // 2. Если это Шип (ловушка)
         if (collision.gameObject.CompareTag("Trap"))
         {
-            // Сразу смерть
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            Die();
         }
+    }
+
+    // --- ФУНКЦИЯ ПОБЕДЫ ---
+    void WinGame()
+    {
+        if (isGameStopped) return;
+        isGameStopped = true; // Блокируем игрока
+
+        // Останавливаем движение
+        rb.velocity = Vector2.zero;
+        rb.bodyType = RigidbodyType2D.Static;
+
+        // Играем победный звук
+        PlaySound(winSound);
+
+        // Ждем 1.5 секунды и грузим экран победы
+        Invoke("LoadWinScene", 1.5f);
+    }
+
+    void LoadWinScene()
+    {
+        // ВАЖНО: Убедись, что сцена называется именно WinScene
+        SceneManager.LoadScene("WinScene");
+    }
+
+    // --- ФУНКЦИЯ СМЕРТИ ---
+    void Die()
+    {
+        if (isGameStopped) return;
+        isGameStopped = true;
+
+        PlaySound(deathSound);
+
+        rb.velocity = Vector2.zero;
+        rb.bodyType = RigidbodyType2D.Static;
+
+        Invoke("RestartLevel", 1f);
+    }
+
+    void RestartLevel()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    void UpdateScoreUI()
+    {
+        if (scoreText != null) scoreText.text = "Coins: " + score;
+    }
+
+    void PlaySound(AudioClip clip)
+    {
+        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip);
     }
 }
