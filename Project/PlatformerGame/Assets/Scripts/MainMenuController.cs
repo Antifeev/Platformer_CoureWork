@@ -14,4 +14,9 @@ public class MainMenuController : MonoBehaviour
         Debug.Log("Выход из игры!");
         Application.Quit(); // Эта команда закроет игру (работает только в готовом .exe)
     }
+    // Эту функцию мы повесим на кнопку "МЕНЮ" в конце игры
+    public void LoadMenu()
+    {
+        SceneManager.LoadScene("MainMenu"); // Загружаем сцену по имени
+    }
 }
